@@ -385,7 +385,7 @@ async def generate_air_quality_email_ollama(name: str, location_name: str, aqi: 
     """
     prompt = dedent(f"""
         You are an assistant that writes short, clear, and empathetic emails in English.
-        Generate a personalized air quality alert notification email.
+        Generate a personalized air quality alert notification email for each category and user"use some emojis and funny messages related to each situation"
 
         Requirements:
         - Tone: friendly, direct, 100–150 words

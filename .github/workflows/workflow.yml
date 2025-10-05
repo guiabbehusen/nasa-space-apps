@@ -1,4 +1,48 @@
-name: workflow.yml
+name: Deploy to VPS on push to main
+
 on:
+  push:
+    branches:
+      - main
 
 jobs:
+  deploy:
+    name: Build and Deploy via SSH
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image
+        run: |
+          docker build -t myapp:latest ./backend
+
+      - name: Save Docker image as tar
+        run: |
+          docker save myapp:latest -o myapp.tar
+
+      - name: Copy Docker image to VPS
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          source: "myapp.tar"
+          target: "~/deploy/"
+
+      - name: Deploy on VPS
+        uses: appleboy/ssh-action@v1.1.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            cd ~/deploy
+            docker load -i myapp.tar
+            docker stop myapp || true
+            docker rm myapp || true
+            docker run -d --name myapp --env-file ~/deploy/.env -p 8000:8000 myapp:latest

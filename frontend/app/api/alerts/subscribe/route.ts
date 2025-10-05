@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 
-const BACKEND_URL = "http://0.0.0.0:8000"
+const BACKEND_URL = "http://api.tempo11.earth:8000"
 
 // CORS headers
 const corsHeaders = {

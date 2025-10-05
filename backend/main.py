@@ -13,6 +13,8 @@ from pymongo import MongoClient
 import asyncio
 import logging
 from textwrap import dedent
+import csv
+import math
 
 # Carregar variáveis de ambiente
 load_dotenv()
@@ -71,6 +73,15 @@ METEOMATICS_PASSWORD = os.getenv("METEOMATICS_PASSWORD")
 SLM_PROVIDER = os.getenv("SLM_PROVIDER", "ollama").lower()  # ollama (default)
 OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://localhost:11434")
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen2.5-coder:1.5b")
+
+# Caminho do CSV de rótulos fuzzy (RAG)
+FUZZY_LABELS_PATH = os.getenv(
+    "FUZZY_LABELS_PATH",
+    os.path.join(os.path.dirname(__file__), "fuzzy_labels.csv")
+)
+
+# Cache em memória para o CSV
+_fuzzy_rows = None  # lazy load
 
 # ============================================================
 # 🧩 Models
@@ -174,6 +185,59 @@ def render_rule_based_message(name: str, location_name: str, aqi: int, category:
     footer = "Você pode ajustar seus alertas nas preferências."
     return f"{greeting}{body}{footer}"
 
+# ---------- Fuzzy labels (RAG) helpers ----------
+def _load_fuzzy_labels_if_needed() -> None:
+    global _fuzzy_rows
+    if _fuzzy_rows is not None:
+        return
+    rows = []
+    try:
+        with open(FUZZY_LABELS_PATH, "r", encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            for r in reader:
+                try:
+                    lon = float(r.get("lon"))
+                    lat = float(r.get("lat"))
+                except (TypeError, ValueError):
+                    continue
+                rows.append({
+                    "lon": lon,
+                    "lat": lat,
+                    "year": r.get("year"),
+                    "NMVOC_label": r.get("NMVOC_label"),
+                    "CO_label": r.get("CO_label"),
+                    "NOx_label": r.get("NOx_label"),
+                    "CH4_label": r.get("CH4_label"),
+                    "final_label": r.get("final_label"),
+                })
+        logger.info("✅ fuzzy_labels.csv carregado (%s linhas)", len(rows))
+    except FileNotFoundError:
+        logger.warning("⚠️  fuzzy_labels.csv não encontrado em %s", FUZZY_LABELS_PATH)
+        rows = []
+    except Exception as e:
+        logger.exception("Erro ao carregar fuzzy_labels.csv: %s", e)
+        rows = []
+    _fuzzy_rows = rows
+
+def find_nearest_region_label(lat: float, lon: float, max_deg_distance: float = 1.0):
+    """
+    Procura a linha mais próxima no CSV por distância euclidiana em graus.
+    Retorna (row_dict, distance_deg) ou (None, None) se nada dentro do raio.
+    """
+    _load_fuzzy_labels_if_needed()
+    if not _fuzzy_rows:
+        return None, None
+    best = None
+    best_d = None
+    for r in _fuzzy_rows:
+        d = math.hypot(lat - r["lat"], lon - r["lon"])
+        if best_d is None or d < best_d:
+            best = r
+            best_d = d
+    if best is not None and best_d is not None and best_d <= max_deg_distance:
+        return best, best_d
+    return None, None
+
 # ---------- Meteomatics helper ----------
 def build_meteomatics_url(from_time_iso: str, to_time_iso: str, params_str: str, lat: float, lon: float) -> str:
     return f"https://api.meteomatics.com/{from_time_iso}--{to_time_iso}:PT1H/{params_str}/{lat},{lon}/json"
@@ -203,6 +267,32 @@ async def fetch_meteomatics(params: List[str], lat: float, lon: float, hours: in
             logger.exception("Erro ao consultar Meteomatics (attempt %s): %s", attempt, e)
             await asyncio.sleep(1 + attempt * 1.0)
     raise last_exc if last_exc else RuntimeError("Erro desconhecido ao consultar Meteomatics")
+
+# ============================================================
+# 📍 Geocode endpoint: converte 'location' textual para lat/lon via Nominatim
+# ============================================================
+@app.get("/geocode")
+async def geocode(location: str):
+    if not location or not location.strip():
+        raise HTTPException(status_code=400, detail="Parâmetro 'location' é obrigatório")
+    try:
+        headers = {"User-Agent": "nasa-space-apps-air-api/1.0 (contact: noreply@example.com)"}
+        params = {"q": location, "format": "json", "limit": 1}
+        async with httpx.AsyncClient(timeout=20.0, headers=headers) as client:
+            resp = await client.get("https://nominatim.openstreetmap.org/search", params=params)
+            resp.raise_for_status()
+            arr = resp.json()
+            if not arr:
+                raise HTTPException(status_code=404, detail="Local não encontrado")
+            top = arr[0]
+            lat = float(top.get("lat"))
+            lon = float(top.get("lon"))
+            return {"lat": lat, "lon": lon, "display_name": top.get("display_name")}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception("Erro ao geocodificar: %s", e)
+        raise HTTPException(status_code=500, detail=f"Erro ao geocodificar: {e}")
 
 # ============================================================
 # 🌦️ Endpoint: Weather (refatorado para async mantendo assinatura)
@@ -385,7 +475,7 @@ async def generate_air_quality_email_ollama(name: str, location_name: str, aqi: 
     """
     prompt = dedent(f"""
         You are an assistant that writes short, clear, and empathetic emails in English.
-        Generate a personalized air quality alert notification email for each category and user"use some emojis and funny messages related to each situation"
+        Generate a personalized air quality alert notification email.
 
         Requirements:
         - Tone: friendly, direct, 100–150 words
@@ -432,6 +522,48 @@ async def render_slm_message(name: str, location_name: str, aqi: int, category: 
     return render_rule_based_message(name, location_name, aqi, category, timestamp)
 
 # ============================================================
+# 🧠 SLM: análise regional curta com contexto do CSV (Qwen via Ollama)
+# ============================================================
+async def generate_regional_analysis(lat: float, lon: float) -> str:
+    row, dist = find_nearest_region_label(lat, lon)
+    if not row:
+        return "Análise regional indisponível para estas coordenadas."
+
+    context = dedent(f"
+        Coordenadas consultadas: lat={lat:.4f}, lon={lon:.4f}
+        Ponto de base mais próximo (Δ≈{dist:.2f}°): lat={row['lat']:.4f}, lon={row['lon']:.4f}, ano={row.get('year')}
+        Rótulos por substância: NMVOC={row.get('NMVOC_label')}, CO={row.get('CO_label')}, NOx={row.get('NOx_label')}, CH4={row.get('CH4_label')}
+        Rótulo final: {row.get('final_label')}
+    ")
+
+    prompt = dedent(f"
+        Você é um analista de qualidade do ar. Com base no contexto a seguir, escreva uma breve análise em português (2-4 frases) sobre o padrão regional de poluentes para as coordenadas informadas. Seja objetivo e mencione as substâncias com rótulos mais críticos.
+
+        CONTEXTO:
+        {context}
+    ")
+
+    if SLM_PROVIDER != "ollama":
+        return "Resumo regional: consulte os rótulos próximos na base e evite exposição em picos.".strip()
+
+    try:
+        def sync_call():
+            import ollama  # type: ignore
+            response = ollama.chat(
+                model=OLLAMA_MODEL or "qwen2.5:latest",
+                messages=[
+                    {"role": "system", "content": "Você escreve análises curtas e objetivas em português."},
+                    {"role": "user", "content": prompt},
+                ],
+                options={"temperature": 0.3},
+            )
+            return (response.get("message", {}).get("content", "") or "").strip()
+        return await asyncio.to_thread(sync_call)
+    except Exception as e:
+        logger.exception("Erro ao gerar análise regional: %s", e)
+        return "Análise regional indisponível no momento."
+
+# ============================================================
 # 🚨 Endpoint: Disparar alertas por e-mail (refatorado para async mantendo assinatura)
 # ============================================================
 @app.post("/alerts/dispatch")
@@ -452,6 +584,9 @@ async def dispatch_alerts(lat: float, lon: float):
     aqi_value = latest.get("aqi")
     aqi_category = latest.get("category")
     timestamp = latest.get("timestamp")
+
+    # Análise regional baseada no CSV + SLM
+    regional_analysis = await generate_regional_analysis(lat, lon)
 
     sent = []
     failed = []
@@ -491,6 +626,9 @@ async def dispatch_alerts(lat: float, lon: float):
             category=aqi_category,
             timestamp=timestamp,
         )
+
+        # Acrescentar análise regional à mensagem
+        body = f"{body}\n\nAnálise regional:\n{regional_analysis}"
 
         # para não bloquear, executamos send_email em thread
         async def send_and_collect(email_addr: str, subj: str, bdy: str):

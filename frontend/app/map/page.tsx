@@ -7,10 +7,11 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Bell, Activity, TrendingUp, TrendingDown, Loader2 } from "lucide-react"
 import Link from "next/link"
-import { getCategoryColor, getCategoryBgColor, type AirQualityData } from "@/lib/air-quality-data"
-import { generateTimelineData, type TimelineData } from "@/lib/weather-data"
+import { getCategoryColor, getCategoryBgColor } from "@/lib/air-quality-data"
 import TimelineScrubber from "@/components/timeline-scrubber"
 import LocationSearch from "@/components/location-search"
+import type { AirQualityData } from "@/lib/air-quality-data"
+import type { TimelineData } from "@/lib/weather-data"
 
 const WindMap = dynamic(() => import("@/components/wind-map"), {
   ssr: false,
@@ -23,16 +24,17 @@ const WindMap = dynamic(() => import("@/components/wind-map"), {
 
 export default function MapPage() {
   const [timelineData, setTimelineData] = useState<TimelineData[] | null>(null)
-  const [currentIndex, setCurrentIndex] = useState<number>(24)
+  const [currentIndex, setCurrentIndex] = useState<number>(48) // hora atual no meio da timeline (48 antes + 48 depois)
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null)
   const [locationName, setLocationName] = useState<string>("")
   const [loading, setLoading] = useState(true)
   const [isUpdating, setIsUpdating] = useState(false)
 
-  /** Busca dados do backend Python via Next.js API routes */
+  // 🧠 Função principal: busca dados de /api/air e /api/weather e combina as timelines
   const fetchAirQualityAndWeather = async (lat: number, lng: number, showLoading = true) => {
     try {
       if (showLoading) setLoading(true)
+
       const [airRes, weatherRes] = await Promise.all([
         fetch(`/api/air?lat=${lat}&lng=${lng}`),
         fetch(`/api/weather?lat=${lat}&lng=${lng}`),
@@ -42,14 +44,34 @@ export default function MapPage() {
         throw new Error("Erro ao buscar dados do backend")
       }
 
-      const airData: AirQualityData = await airRes.json()
+      const airData = await airRes.json()
       const weatherData = await weatherRes.json()
 
-      // Cria timeline fake baseada em dados reais
-      const timeline = generateTimelineData(airData.aqi, airData.pollutants, 24, 48)
+      // ⚡ Merge das timelines do backend
+      const mergedTimeline =
+        airData.timeline?.map((airEntry: any, idx: number) => {
+          const weatherEntry = weatherData.timeline?.[idx] || {}
+          return {
+            timestamp: airEntry.timestamp,
+            airQuality: {
+              aqi: airEntry.aqi,
+              category: airEntry.category,
+              pollutants: airEntry.pollutants,
+            },
+            weather: {
+              temperature: weatherEntry.t_2m,
+              feelsLike: weatherEntry.t_apparent || weatherEntry.t_2m,
+              windSpeed: weatherEntry.wind_speed_10m,
+              windDirection: weatherEntry.wind_dir_10m,
+              humidity: weatherEntry.relative_humidity_2m,
+              pressure: weatherEntry.msl_pressure,
+              cloudCover: weatherEntry.total_cloud_cover,
+            },
+          }
+        }) || []
 
-      setTimelineData(timeline)
-      setLocationName(airData.location?.name || "Local atual")
+      setTimelineData(mergedTimeline)
+      setLocationName(airData.location?.name || weatherData.location?.name || "Local atual")
     } catch (err) {
       console.error("[MapPage] Erro ao buscar dados:", err)
     } finally {
@@ -58,7 +80,7 @@ export default function MapPage() {
     }
   }
 
-  /** Obter geolocalização inicial */
+  // 📍 Obter localização do usuário
   const getUserLocation = () => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
@@ -71,28 +93,28 @@ export default function MapPage() {
           fetchAirQualityAndWeather(location.lat, location.lng)
         },
         () => {
-          const defaultLocation = { lat: 40.7128, lng: -74.006 } // fallback NYC
+          const defaultLocation = { lat: 40.7128, lng: -74.006 }
           setUserLocation(defaultLocation)
           fetchAirQualityAndWeather(defaultLocation.lat, defaultLocation.lng)
-        }
+        },
       )
     }
   }
 
-  /** Quando carregar a página */
+  // 🚀 Ao carregar a página
   useEffect(() => {
     getUserLocation()
   }, [])
 
-  /** Quando o usuário muda manualmente o local */
+  // 📍 Quando usuário escolhe um local
   const handleLocationSelect = (location: { lat: number; lng: number; name: string }) => {
     setUserLocation({ lat: location.lat, lng: location.lng })
     setLocationName(location.name)
     fetchAirQualityAndWeather(location.lat, location.lng)
-    setCurrentIndex(24)
+    setCurrentIndex(48)
   }
 
-  /** Quando o usuário muda o horário no timeline */
+  // 🕒 Quando muda o horário da timeline
   const handleTimelineChange = async (index: number) => {
     setCurrentIndex(index)
     if (!userLocation) return
@@ -100,7 +122,7 @@ export default function MapPage() {
     await fetchAirQualityAndWeather(userLocation.lat, userLocation.lng, false)
   }
 
-  /** Loader inicial */
+  // 🔄 Tela de carregamento inicial
   if (!userLocation && loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen text-muted-foreground">
@@ -110,9 +132,10 @@ export default function MapPage() {
     )
   }
 
-  // Proteção contra dados indefinidos
+  // Proteções contra dados indefinidos
   const currentData = timelineData?.[currentIndex]
   const airQuality = currentData?.airQuality
+  const weather = currentData?.weather
 
   const previousData =
     timelineData && currentIndex > 0 ? timelineData[Math.max(0, currentIndex - 6)] : null
@@ -133,12 +156,12 @@ export default function MapPage() {
         </p>
       </div>
 
-      {/* Busca por local */}
+      {/* Busca de local */}
       <div className="max-w-2xl">
         <LocationSearch onLocationSelect={handleLocationSelect} />
       </div>
 
-      {/* Timeline */}
+      {/* Timeline Scrubber */}
       {timelineData ? (
         <TimelineScrubber
           data={timelineData}
@@ -199,7 +222,7 @@ export default function MapPage() {
         </CardContent>
       </Card>
 
-      {/* Map and Pollutants */}
+      {/* Mapa + Poluentes */}
       <div className="grid lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 relative">
           {isUpdating && (
@@ -221,7 +244,7 @@ export default function MapPage() {
           )}
         </div>
 
-        {/* Pollutants */}
+        {/* Poluentes */}
         <div className="space-y-6">
           <Card>
             <CardHeader>
@@ -251,6 +274,27 @@ export default function MapPage() {
                 )}
             </CardContent>
           </Card>
+
+          {/* Weather Card (extra) */}
+          {weather && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Current Weather</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <div className="text-2xl font-bold">
+                  {weather.temperature ? `${weather.temperature.toFixed(1)}°C` : "—"}
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  Feels like {weather.feelsLike ? `${weather.feelsLike.toFixed(1)}°C` : "—"}
+                </div>
+                <p className="text-sm">
+                  Wind: {weather.windSpeed ? `${weather.windSpeed.toFixed(1)} km/h` : "—"} ·{" "}
+                  {weather.humidity ? `${weather.humidity.toFixed(0)}% humidity` : "—"}
+                </p>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
     </div>

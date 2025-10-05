@@ -8,6 +8,7 @@ from datetime import datetime
 import firebase_admin
 from firebase_admin import credentials, firestore
 from dotenv import load_dotenv
+from datetime import timedelta
 
 # Carregar variáveis de ambiente
 load_dotenv()
@@ -111,202 +112,139 @@ async def health_check():
 @app.get("/weather")
 async def get_weather(lat: float, lon: float):
     """
-    Obtém dados meteorológicos do Meteomatics
-
-    Args:
-        lat: Latitude (-90 a 90)
-        lon: Longitude (-180 a 180)
-
-    Returns:
-        Dados meteorológicos completos
+    Obtém dados meteorológicos das últimas 48h e próximas 48h via Meteomatics
     """
     if not METEOMATICS_USER or not METEOMATICS_PASSWORD:
-        raise HTTPException(
-            status_code=503,
-            detail="Meteomatics API não configurada. Configure METEOMATICS_USER e METEOMATICS_PASSWORD no .env"
-        )
+        raise HTTPException(status_code=503, detail="Meteomatics API não configurada")
 
-    # Validar coordenadas
     if not (-90 <= lat <= 90):
-        raise HTTPException(status_code=400, detail="Latitude deve estar entre -90 e 90")
+        raise HTTPException(status_code=400, detail="Latitude inválida")
     if not (-180 <= lon <= 180):
-        raise HTTPException(status_code=400, detail="Longitude deve estar entre -180 e 180")
+        raise HTTPException(status_code=400, detail="Longitude inválida")
 
     try:
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            timestamp = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
+        async with httpx.AsyncClient(timeout=60.0) as client:
+            now = datetime.utcnow()
+            start_time = (now.replace(microsecond=0)).isoformat() + "Z"
+            from_time = (now.replace(microsecond=0) - timedelta(hours=48)).isoformat() + "Z"
+            to_time = (now.replace(microsecond=0) + timedelta(hours=48)).isoformat() + "Z"
 
             params = [
                 "t_2m:C",  # temperatura
-                "t_apparent:C",  # sensação térmica
+                "wind_speed_10m:kmh",  # vento
+                "wind_dir_10m:d",  # direção
                 "relative_humidity_2m:p",  # umidade
-                "wind_speed_10m:kmh",  # velocidade do vento
-                "wind_dir_10m:d",  # direção do vento
-                "wind_gusts_10m_1h:kmh",  # rajadas
-                "msl_pressure:hPa",  # pressão
-                "visibility:km",  # visibilidade
-                "total_cloud_cover:p",  # nuvens
-                "uv:idx"  # UV index
+                "total_cloud_cover:p",
+                "msl_pressure:hPa"
             ]
 
             params_str = ",".join(params)
-            url = f"https://api.meteomatics.com/{timestamp}/{params_str}/{lat},{lon}/json"
+            url = f"https://api.meteomatics.com/{from_time}--{to_time}:PT1H/{params_str}/{lat},{lon}/json"
 
-            response = await client.get(
-                url,
-                auth=(METEOMATICS_USER, METEOMATICS_PASSWORD)
-            )
-
-            if response.status_code == 401:
-                raise HTTPException(
-                    status_code=401,
-                    detail="Credenciais Meteomatics inválidas"
-                )
+            response = await client.get(url, auth=(METEOMATICS_USER, METEOMATICS_PASSWORD))
 
             if response.status_code != 200:
-                raise HTTPException(
-                    status_code=response.status_code,
-                    detail=f"Erro na API Meteomatics: {response.text}"
-                )
+                raise HTTPException(status_code=response.status_code, detail=f"Erro Meteomatics: {response.text}")
 
             data = response.json()
+            coordinates = data["data"][0]["coordinates"][0]["dates"]
+            timeline = []
 
-            def get_value(index, default=0):
-                try:
-                    return data["data"][index]["coordinates"][0]["dates"][0]["value"]
-                except (IndexError, KeyError, TypeError):
-                    return default
+            for i in range(len(coordinates)):
+                entry = {"timestamp": coordinates[i]["date"]}
+                for j, param in enumerate(params):
+                    try:
+                        value = data["data"][j]["coordinates"][0]["dates"][i]["value"]
+                    except (IndexError, KeyError):
+                        value = None
+                    name = param.split(":")[0]
+                    entry[name] = value
+                timeline.append(entry)
 
-            weather_response = {
-                "temperature": round(get_value(0, 20.0), 1),
-                "feelsLike": round(get_value(1, 20.0), 1),
-                "humidity": round(get_value(2, 50.0), 1),
-                "windSpeed": round(get_value(3, 0.0), 1),
-                "windDirection": round(get_value(4, 0.0), 1),
-                "windGust": round(get_value(5, 0.0), 1),
-                "pressure": round(get_value(6, 1013.0), 1),
-                "visibility": round(get_value(7, 10.0), 1),
-                "cloudCover": round(get_value(8, 0.0), 1),
-                "uvIndex": round(get_value(9, 0.0), 1),
-                "timestamp": datetime.utcnow().isoformat()
+            return {
+                "location": {
+                    "lat": lat,
+                    "lng": lon,
+                    "name": get_location_name(lat, lon)
+                },
+                "timeline": timeline
             }
 
-            return weather_response
-
-    except HTTPException:
-        raise
     except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Erro ao buscar dados meteorológicos: {str(e)}"
-        )
-
+        raise HTTPException(status_code=500, detail=f"Erro ao buscar dados meteorológicos: {str(e)}")
 
 @app.get("/air")
 async def get_air_quality(lat: float, lon: float):
     """
-    Obtém dados de qualidade do ar do Meteomatics
-
-    Args:
-        lat: Latitude (-90 a 90)
-        lon: Longitude (-180 a 180)
-
-    Returns:
-        Dados de qualidade do ar com AQI e poluentes
+    Obtém dados de qualidade do ar (últimas 48h e próximas 48h)
     """
     if not METEOMATICS_USER or not METEOMATICS_PASSWORD:
-        raise HTTPException(
-            status_code=503,
-            detail="Meteomatics API não configurada. Configure METEOMATICS_USER e METEOMATICS_PASSWORD no .env"
-        )
+        raise HTTPException(status_code=503, detail="Meteomatics API não configurada")
 
-    # Validar coordenadas
     if not (-90 <= lat <= 90):
-        raise HTTPException(status_code=400, detail="Latitude deve estar entre -90 e 90")
+        raise HTTPException(status_code=400, detail="Latitude inválida")
     if not (-180 <= lon <= 180):
-        raise HTTPException(status_code=400, detail="Longitude deve estar entre -180 e 180")
+        raise HTTPException(status_code=400, detail="Longitude inválida")
 
     try:
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            timestamp = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
+        async with httpx.AsyncClient(timeout=60.0) as client:
+            now = datetime.utcnow()
+            from_time = (now.replace(microsecond=0) - timedelta(hours=48)).isoformat() + "Z"
+            to_time = (now.replace(microsecond=0) + timedelta(hours=48)).isoformat() + "Z"
 
-            # Parâmetros de qualidade do ar disponíveis no Meteomatics
             params = [
-                "pm2p5:ugm3",  # PM2.5
-                "pm10:ugm3",  # PM10
-                "no2:ugm3",  # NO2
-                "o3:ugm3",  # O3
-                "so2:ugm3"  # SO2
+                "pm2p5:ugm3",
+                "pm10:ugm3",
+                "no2:ugm3",
+                "o3:ugm3",
+                "so2:ugm3"
             ]
 
             params_str = ",".join(params)
-            url = f"https://api.meteomatics.com/{timestamp}/{params_str}/{lat},{lon}/json"
+            url = f"https://api.meteomatics.com/{from_time}--{to_time}:PT1H/{params_str}/{lat},{lon}/json"
 
-            response = await client.get(
-                url,
-                auth=(METEOMATICS_USER, METEOMATICS_PASSWORD)
-            )
-
-            if response.status_code == 401:
-                raise HTTPException(
-                    status_code=401,
-                    detail="Credenciais Meteomatics inválidas"
-                )
+            response = await client.get(url, auth=(METEOMATICS_USER, METEOMATICS_PASSWORD))
 
             if response.status_code != 200:
-                raise HTTPException(
-                    status_code=response.status_code,
-                    detail=f"Erro na API Meteomatics: {response.text}"
-                )
+                raise HTTPException(status_code=response.status_code, detail=f"Erro Meteomatics: {response.text}")
 
             data = response.json()
+            coordinates = data["data"][0]["coordinates"][0]["dates"]
+            timeline = []
 
-            def get_value(index, default=0):
-                try:
-                    return data["data"][index]["coordinates"][0]["dates"][0]["value"]
-                except (IndexError, KeyError, TypeError):
-                    return default
+            for i in range(len(coordinates)):
+                pm25 = data["data"][0]["coordinates"][0]["dates"][i]["value"]
+                no2 = data["data"][2]["coordinates"][0]["dates"][i]["value"]
+                o3 = data["data"][3]["coordinates"][0]["dates"][i]["value"]
+                so2 = data["data"][4]["coordinates"][0]["dates"][i]["value"]
 
-            pm25 = get_value(0, 0)
-            pm10 = get_value(1, 0)
-            no2 = get_value(2, 0)
-            o3 = get_value(3, 0)
-            so2 = get_value(4, 0)
+                aqi = calculate_aqi_from_pm25(pm25)
+                category = get_aqi_category(aqi)
 
-            # Calcular AQI baseado em PM2.5 (padrão US EPA)
-            aqi = calculate_aqi_from_pm25(pm25)
+                timeline.append({
+                    "timestamp": coordinates[i]["date"],
+                    "aqi": aqi,
+                    "category": category,
+                    "pollutants": {
+                        "pm25": round(pm25, 1),
+                        "no2": round(no2, 1),
+                        "o3": round(o3, 1),
+                        "so2": round(so2, 1)
+                    }
+                })
 
-            # Determinar categoria
-            category = get_aqi_category(aqi)
-
-            # Nome da localização
-            location_name = get_location_name(lat, lon)
-
-            air_response = {
+            return {
                 "location": {
                     "lat": lat,
                     "lng": lon,
-                    "name": location_name
+                    "name": get_location_name(lat, lon)
                 },
-                "pollutants": {
-                    "pm25": round(pm25),
-                    "no2": round(no2),
-                    "o3": round(o3)
-                },
-                "aqi": aqi,
-                "category": category,
-                "timestamp": datetime.utcnow().isoformat()
+                "timeline": timeline
             }
 
-            return air_response
-
-    except HTTPException:
-        raise
     except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Erro ao buscar dados de qualidade do ar: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Erro ao buscar dados de qualidade do ar: {str(e)}")
+
 
 
 @app.post("/subscribe")

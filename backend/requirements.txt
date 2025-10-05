@@ -1,3 +1,4 @@
+# Web/API
 fastapi==0.115.0
 uvicorn[standard]==0.30.6
 pydantic==2.9.2
@@ -5,5 +6,9 @@ pydantic[email]==2.9.2
 python-dotenv==1.0.1
 httpx==0.27.2
 pymongo==4.10.1
-numpy
-scikit-fuzzy
+
+
+numpy>=1.24
+scipy>=1.10
+pandas>=2.0
+scikit-fuzzy>=0.4.2

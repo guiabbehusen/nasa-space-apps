@@ -2,6 +2,16 @@ import { type NextRequest, NextResponse } from "next/server"
 
 const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8000"
 
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+}
+
+export async function OPTIONS() {
+  return NextResponse.json({}, { status: 200, headers: corsHeaders })
+}
+
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams
   const lat = searchParams.get("lat")
@@ -10,52 +20,36 @@ export async function GET(request: NextRequest) {
   if (!lat || !lng) {
     return NextResponse.json(
       { error: "Missing required parameters: lat and lng" },
-      { status: 400 }
+      { status: 400, headers: corsHeaders }
     )
   }
 
   try {
-    // Chamar a API Python
-    const response = await fetch(
-      `${BACKEND_URL}/weather?lat=${lat}&lon=${lng}`,
-      {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        // Cache para 5 minutos
-        next: { revalidate: 300 },
-      }
-    )
+    const response = await fetch(`${BACKEND_URL}/weather?lat=${lat}&lon=${lng}`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+      next: { revalidate: 300 },
+    })
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}))
-      console.error("[weather] Backend error:", response.status, errorData)
-      
       return NextResponse.json(
-        { 
+        {
           error: errorData.detail || "Failed to fetch weather data",
-          status: response.status 
         },
-        { status: response.status }
+        { status: response.status, headers: corsHeaders }
       )
     }
 
     const data = await response.json()
-    
-    console.log("[weather] Success:", { lat, lng, temp: data.temperature })
-    
-    return NextResponse.json(data)
-    
+    return NextResponse.json(data, { headers: corsHeaders })
   } catch (error) {
-    console.error("[weather] Error:", error)
-    
     return NextResponse.json(
-      { 
+      {
         error: "Failed to connect to weather service",
-        message: error instanceof Error ? error.message : "Unknown error"
+        message: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 503 }
+      { status: 503, headers: corsHeaders }
     )
   }
 }

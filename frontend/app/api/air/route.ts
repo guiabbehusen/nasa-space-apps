@@ -1,6 +1,16 @@
 import { type NextRequest, NextResponse } from "next/server"
 
-const BACKEND_URL = process.env.BACKEND_URL || "http://api.tempo11.earth:8000"
+const BACKEND_URL = "http://api.tempo11.earth:8000"
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+}
+
+export async function OPTIONS() {
+  return NextResponse.json({}, { status: 200, headers: corsHeaders })
+}
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams
@@ -10,7 +20,7 @@ export async function GET(request: NextRequest) {
   if (!lat || !lng) {
     return NextResponse.json(
       { error: "Missing required parameters: lat and lng" },
-      { status: 400 }
+      { status: 400, headers: corsHeaders }
     )
   }
 
@@ -23,36 +33,23 @@ export async function GET(request: NextRequest) {
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}))
-      console.error("[air-quality] Backend error:", response.status, errorData)
-
       return NextResponse.json(
         {
           error: errorData.detail || "Failed to fetch air quality data",
-          status: response.status,
         },
-        { status: response.status }
+        { status: response.status, headers: corsHeaders }
       )
     }
 
     const data = await response.json()
-
-    console.log("[air-quality] Success:", {
-      lat,
-      lng,
-      aqi: data.aqi,
-      category: data.category,
-    })
-
-    return NextResponse.json(data)
+    return NextResponse.json(data, { headers: corsHeaders })
   } catch (error) {
-    console.error("[air-quality] Error:", error)
-
     return NextResponse.json(
       {
         error: "Failed to connect to air quality service",
         message: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 503 }
+      { status: 503, headers: corsHeaders }
     )
   }
 }

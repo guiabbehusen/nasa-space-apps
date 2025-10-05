@@ -18,7 +18,7 @@ export function useAirQualityRealtime(location?: { lat: number; lng: number }) {
     }
 
     // Subscribe to air quality updates
-    const unsubscribe = ws.subscribe("air-quality-update", (message: WebSocketMessage) => {
+    const unsubscribe = ws.subscribe("air-update", (message: WebSocketMessage) => {
       if (message.type === "air-quality-update") {
         setData(message.data as AirQualityData)
         setIsConnected(true)

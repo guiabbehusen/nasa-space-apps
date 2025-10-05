@@ -15,45 +15,42 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // Chamar a API Python
-    const response = await fetch(
-      `${BACKEND_URL}/weather?lat=${lat}&lon=${lng}`,
-      {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        // Cache para 5 minutos
-        next: { revalidate: 300 },
-      }
-    )
+    const response = await fetch(`${BACKEND_URL}/air?lat=${lat}&lon=${lng}`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+      next: { revalidate: 300 },
+    })
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}))
-      console.error("[weather] Backend error:", response.status, errorData)
-      
+      console.error("[air-quality] Backend error:", response.status, errorData)
+
       return NextResponse.json(
-        { 
-          error: errorData.detail || "Failed to fetch weather data",
-          status: response.status 
+        {
+          error: errorData.detail || "Failed to fetch air quality data",
+          status: response.status,
         },
         { status: response.status }
       )
     }
 
     const data = await response.json()
-    
-    console.log("[weather] Success:", { lat, lng, temp: data.temperature })
-    
+
+    console.log("[air-quality] Success:", {
+      lat,
+      lng,
+      aqi: data.aqi,
+      category: data.category,
+    })
+
     return NextResponse.json(data)
-    
   } catch (error) {
-    console.error("[weather] Error:", error)
-    
+    console.error("[air-quality] Error:", error)
+
     return NextResponse.json(
-      { 
-        error: "Failed to connect to weather service",
-        message: error instanceof Error ? error.message : "Unknown error"
+      {
+        error: "Failed to connect to air quality service",
+        message: error instanceof Error ? error.message : "Unknown error",
       },
       { status: 503 }
     )

@@ -6,6 +6,10 @@ import httpx
 import os
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
+import smtplib
+from email.mime.text import MIMEText
+from email.utils import formataddr
+from textwrap import dedent
 from pymongo import MongoClient
 
 # Carregar variáveis de ambiente
@@ -42,9 +46,20 @@ if MONGO_URI:
 else:
     print("⚠️  MongoDB não configurado - defina MONGO_URI no .env")
 
+# Configuração de E-mail (SMTP)
+SMTP_HOST = os.getenv("SMTP_HOST")
+SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
+SMTP_USER = os.getenv("SMTP_USER")
+SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
+SMTP_FROM_NAME = os.getenv("SMTP_FROM_NAME", "Air Alerts")
+SMTP_FROM_EMAIL = os.getenv("SMTP_FROM_EMAIL", SMTP_USER or "noreply@example.com")
+
 # Credenciais Meteomatics
 METEOMATICS_USER = os.getenv("METEOMATICS_USER")
 METEOMATICS_PASSWORD = os.getenv("METEOMATICS_PASSWORD")
+
+# SLM / OpenAI
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 # ============================================================
 # 🧩 Models
@@ -83,7 +98,9 @@ def health_check():
         "timestamp": datetime.utcnow().isoformat(),
         "services": {
             "meteomatics": "ok" if METEOMATICS_USER else "not configured",
-            "mongodb": "ok" if db is not None else "not configured"
+            "mongodb": "ok" if db is not None else "not configured",
+            "email": "ok" if SMTP_HOST and SMTP_USER and SMTP_PASSWORD else "not configured",
+            "slm": "ok" if OPENAI_API_KEY else "not configured"
         }
     }
 
@@ -202,6 +219,24 @@ def get_air_quality(lat: float, lon: float):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erro ao buscar qualidade do ar: {e}")
 
+
+# ============================================================
+# ✉️ Utilitário de envio de e-mail
+# ============================================================
+def send_email(subject: str, body: str, to_email: str) -> None:
+    if not (SMTP_HOST and SMTP_USER and SMTP_PASSWORD):
+        raise RuntimeError("SMTP não configurado")
+
+    msg = MIMEText(body, "plain", "utf-8")
+    msg["Subject"] = subject
+    msg["From"] = formataddr((SMTP_FROM_NAME, SMTP_FROM_EMAIL))
+    msg["To"] = to_email
+
+    with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=30) as server:
+        server.starttls()
+        server.login(SMTP_USER, SMTP_PASSWORD)
+        server.send_message(msg)
+
 # ============================================================
 # 📧 Endpoint: Inscrição no MongoDB
 # ============================================================
@@ -211,11 +246,16 @@ def subscribe_email(subscription: EmailSubscription):
         raise HTTPException(status_code=503, detail="MongoDB não configurado")
 
     try:
+        # Validação simples de thresholds
+        thresholds = subscription.thresholds or {}
+        if not isinstance(thresholds, dict):
+            raise HTTPException(status_code=400, detail="'thresholds' deve ser um objeto")
+
         data = {
             "email": subscription.email,
             "location": subscription.location,
             "profile": subscription.profile,
-            "thresholds": subscription.thresholds,
+            "thresholds": thresholds,
             "subscribed_at": datetime.utcnow(),
             "active": True
         }
@@ -228,6 +268,82 @@ def subscribe_email(subscription: EmailSubscription):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erro ao salvar inscrição: {e}")
+
+
+# ============================================================
+# 🚨 Endpoint: Disparar alertas por e-mail
+# ============================================================
+@app.post("/alerts/dispatch")
+def dispatch_alerts(lat: float, lon: float):
+    if db is None:
+        raise HTTPException(status_code=503, detail="MongoDB não configurado")
+    if not (SMTP_HOST and SMTP_USER and SMTP_PASSWORD):
+        raise HTTPException(status_code=503, detail="SMTP não configurado")
+
+    # Obter a timeline de AQI para a localização
+    air_data = get_air_quality(lat, lon)
+    timeline = air_data.get("timeline", [])
+    if not timeline:
+        raise HTTPException(status_code=502, detail="Sem dados de qualidade do ar")
+
+    # Usar o valor mais recente
+    latest = timeline[0]
+    aqi_value = latest.get("aqi")
+    aqi_category = latest.get("category")
+    timestamp = latest.get("timestamp")
+
+    sent = []
+    failed = []
+
+    # Iterar inscrições ativas
+    cursor = db["subscriptions"].find({"active": True})
+    for sub in cursor:
+        email = sub.get("email")
+        thresholds = sub.get("thresholds", {}) or {}
+        alert_threshold = None
+
+        # Interpretar threshold por AQI numérico
+        if isinstance(thresholds, dict):
+            if "aqi" in thresholds and isinstance(thresholds["aqi"], (int, float)):
+                alert_threshold = thresholds["aqi"]
+
+        should_alert = False
+        if aqi_value is not None and alert_threshold is not None and aqi_value >= alert_threshold:
+            should_alert = True
+
+        # Alternativamente, permitir threshold por categoria
+        if not should_alert and isinstance(thresholds.get("category"), str):
+            desired_cat = thresholds["category"].strip().lower()
+            if isinstance(aqi_category, str) and aqi_category.strip().lower() == desired_cat:
+                should_alert = True
+
+        if not should_alert:
+            continue
+
+        subject = f"Alerta de Qualidade do Ar: {aqi_category} (AQI {aqi_value})"
+        body = render_slm_message(
+            name=sub.get("name") or sub.get("profile"),
+            location_name=air_data["location"]["name"],
+            aqi=aqi_value,
+            category=aqi_category,
+            timestamp=timestamp,
+        )
+
+        try:
+            send_email(subject, body, email)
+            sent.append(email)
+        except Exception as e:
+            failed.append({"email": email, "error": str(e)})
+
+    return {
+        "success": True,
+        "dispatched": len(sent),
+        "failed": failed,
+        "aqi": aqi_value,
+        "category": aqi_category,
+        "timestamp": timestamp,
+        "location": air_data.get("location")
+    }
 
 # ============================================================
 # 🧾 Endpoint: Listagem de inscrições
@@ -285,6 +401,69 @@ def get_aqi_category(aqi: int) -> str:
     elif aqi <= 200: return "Unhealthy"
     elif aqi <= 300: return "Very Unhealthy"
     else: return "Hazardous"
+
+
+def render_rule_based_message(name: str, location_name: str, aqi: int, category: str, timestamp: str) -> str:
+    recommendations = {
+        "Good": "Aproveite atividades ao ar livre normalmente.",
+        "Moderate": "Sensíveis devem considerar reduzir exposição prolongada ao ar livre.",
+        "Unhealthy for Sensitive Groups": "Pessoas sensíveis devem limitar atividades intensas ao ar livre.",
+        "Unhealthy": "Evite atividades ao ar livre; considere usar máscara.",
+        "Very Unhealthy": "Permaneça em ambientes internos com filtragem de ar.",
+        "Hazardous": "Emergência: evite sair e garanta vedação/filtragem do ar."
+    }
+
+    tip = recommendations.get(category, "Fique atento às orientações locais.")
+    greeting_name = name or ""
+    greeting = f"Olá {greeting_name},".strip()
+    body = f"\n\nAlerta de Qualidade do Ar em {location_name} ({timestamp}).\nCategoria: {category}\nAQI: {aqi}\n\nRecomendação: {tip}\n\n"  # noqa: E501
+    footer = "Você pode ajustar seus alertas nas preferências."
+    return f"{greeting}{body}{footer}"
+
+
+def render_slm_message(name: str, location_name: str, aqi: int, category: str, timestamp: str) -> str:
+    if not OPENAI_API_KEY:
+        return render_rule_based_message(name, location_name, aqi, category, timestamp)
+
+    # Lazy import to avoid hard dependency when not configured
+    try:
+        from openai import OpenAI  # type: ignore
+    except Exception:
+        return render_rule_based_message(name, location_name, aqi, category, timestamp)
+
+    prompt = dedent(f"""
+        Você é um assistente que escreve e-mails curtos, claros e empáticos em PT-BR.
+        Gere um e-mail de notificação de alerta de qualidade do ar personalizado.
+
+        Requisitos:
+        - Tom: cordial, direto, 100-150 palavras
+        - Inclua: local, timestamp, categoria, AQI numérico
+        - 1-2 recomendações práticas para a categoria
+        - Assinatura curta
+
+        Dados:
+        - Nome: {name or 'usuário'}
+        - Local: {location_name}
+        - Timestamp: {timestamp}
+        - Categoria: {category}
+        - AQI: {aqi}
+    """)
+
+    try:
+        client = OpenAI(api_key=OPENAI_API_KEY)
+        completion = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "Você cria e-mails curtos, claros e empáticos."},
+                {"role": "user", "content": prompt},
+            ],
+            temperature=0.7,
+            max_tokens=280,
+        )
+        content = completion.choices[0].message.content or ""
+        return content.strip() or render_rule_based_message(name, location_name, aqi, category, timestamp)
+    except Exception:
+        return render_rule_based_message(name, location_name, aqi, category, timestamp)
 
 # ============================================================
 # 🚀 Startup

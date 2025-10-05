@@ -48,4 +48,10 @@ jobs:
             docker load -i myapp.tar
             docker stop myapp || true
             docker rm myapp || true
-            docker run -d --name myapp --env-file ~/deploy/.env -p 8000:8000 myapp:latest
+            if [ -f ".env" ]; then
+              docker run -d --name myapp --env-file .env -p 8000:8000 myapp:latest
+            else
+              echo "⚠️  .env não encontrado, rodando sem variáveis de ambiente"
+              docker run -d --name myapp -p 8000:8000 myapp:latest
+            fi
+

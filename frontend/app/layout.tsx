@@ -1,12 +1,26 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { GeistSans } from "geist/font/sans"
-import { GeistMono } from "geist/font/mono"
+import { Fira_Sans, Overpass } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import "./globals.css"
 import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
 import { Suspense } from "react"
+
+const firaSans = Fira_Sans({
+  subsets: ["latin"],
+  weight: ["400", "700", "900"],
+  variable: "--font-heading",
+  display: "swap",
+})
+
+const overpass = Overpass({
+  subsets: ["latin"],
+  weight: ["400", "700"],
+  style: ["normal", "italic"],
+  variable: "--font-sans",
+  display: "swap",
+})
 
 export const metadata: Metadata = {
   title: "BREATHSAFE – Personal Air Health Assistant",
@@ -22,7 +36,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark">
-      <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable} antialiased`}>
+      <body className={`${firaSans.variable} ${overpass.variable} font-sans antialiased`}>
         <Suspense fallback={<div>Loading...</div>}>
           <Navbar />
           <main className="min-h-screen">{children}</main>

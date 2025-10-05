@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { Wind } from "lucide-react"
+import Image from "next/image"
 
 export function Footer() {
   return (
@@ -8,12 +8,21 @@ export function Footer() {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
           <div className="space-y-3 sm:col-span-2 md:col-span-1">
             <Link href="/" className="flex items-center gap-2 font-bold text-lg">
-              <Wind className="h-5 w-5 text-primary" />
-              <span>BREATHSAFE</span>
+              <Image
+                src="/logos/nasa-icon-simple.png"
+                alt="NASA"
+                width={24}
+                height={24}
+                className="w-6 h-6 opacity-70"
+              />
+              <span className="font-heading">BREATHSAFE</span>
             </Link>
             <p className="text-sm text-muted-foreground max-w-xs">
               Personal Air Health Assistant powered by NASA open data.
             </p>
+            <div className="pt-2">
+              <Image src="/logos/nasa-icon-simple.png" alt="NASA" width={48} height={48} className="opacity-40" />
+            </div>
           </div>
 
           <div>

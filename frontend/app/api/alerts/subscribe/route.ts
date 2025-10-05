@@ -5,7 +5,7 @@ const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8000"
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { email, location, profile, thresholds, name } = body
+    const { email, location, profile, thresholds } = body
 
     // Validação básica
     if (!email || !location || !profile) {
@@ -34,7 +34,6 @@ export async function POST(request: NextRequest) {
       },
       body: JSON.stringify({
         email,
-        name,
         location,
         profile,
         thresholds,

@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState, useRef, useEffect } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -24,6 +23,21 @@ export default function TimelineScrubber({ data, currentIndex, onIndexChange }: 
   const isPast = currentTime < now
   const isFuture = currentTime > now
 
+  // 🧩 util para achar o índice mais próximo do "now"
+  const getClosestToNowIndex = () => {
+    const nowMs = Date.now()
+    let closestIndex = 0
+    let minDiff = Infinity
+    data.forEach((item, i) => {
+      const diff = Math.abs(new Date(item.timestamp).getTime() - nowMs)
+      if (diff < minDiff) {
+        minDiff = diff
+        closestIndex = i
+      }
+    })
+    return closestIndex
+  }
+
   const handleSliderClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!sliderRef.current) return
     const rect = sliderRef.current.getBoundingClientRect()
@@ -35,7 +49,6 @@ export default function TimelineScrubber({ data, currentIndex, onIndexChange }: 
 
   const handleTouchStart = () => setIsDragging(true)
   const handleTouchEnd = () => setIsDragging(false)
-
   const handleMouseDown = () => setIsDragging(true)
   const handleMouseUp = () => setIsDragging(false)
 
@@ -102,6 +115,8 @@ export default function TimelineScrubber({ data, currentIndex, onIndexChange }: 
     return `${diffHours}h`
   }
 
+  const nowIndex = getClosestToNowIndex() // 🧩 usado p/ cálculo de barra e botão Now
+
   return (
     <Card className="border-2">
       <CardContent className="pt-4 md:pt-6 space-y-4 md:space-y-6 px-3 md:px-6">
@@ -152,8 +167,8 @@ export default function TimelineScrubber({ data, currentIndex, onIndexChange }: 
                 {/* Past/Future Indicator */}
                 <div className="absolute inset-0 flex">
                   <div
-                    className="bg-primary/10 rounded-l-lg"
-                    style={{ width: `${(data.findIndex((d) => new Date(d.timestamp) >= now) / data.length) * 100}%` }}
+                    className="bg-primary/10 rounded-l-lg transition-all"
+                    style={{ width: `${(nowIndex / (data.length - 1)) * 100}%` }} // 🧩 fix alinhado com closestIndex
                   />
                 </div>
 
@@ -182,7 +197,7 @@ export default function TimelineScrubber({ data, currentIndex, onIndexChange }: 
 
               {/* Labels */}
               <div className="flex items-center justify-between text-[10px] md:text-xs text-muted-foreground px-1">
-                <span>24h ago</span>
+                <span>48h ago</span>
                 <span className="font-medium text-foreground">Now</span>
                 <span>48h ahead</span>
               </div>
@@ -223,7 +238,8 @@ export default function TimelineScrubber({ data, currentIndex, onIndexChange }: 
               variant="outline"
               size="sm"
               className="h-7 text-xs md:h-8 md:text-sm px-2 md:px-3 bg-transparent"
-              onClick={() => onIndexChange(data.findIndex((d) => new Date(d.timestamp) >= now))}
+              // 🧩 fix “Now” indo 1 à frente → usa índice mais próximo
+              onClick={() => onIndexChange(getClosestToNowIndex())}
             >
               Now
             </Button>

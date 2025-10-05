@@ -1,39 +1,16 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, EmailStr
-from typing import Optional, List, Dict, Any
-import httpx
-import os
-from datetime import datetime, timedelta
-from dotenv import load_dotenv
-import smtplib
-from email.mime.text import MIMEText
-from email.utils import formataddr
-from pymongo import MongoClient
-import asyncio
 import logging
 from textwrap import dedent
 import csv
 import math
 
-# Carregar variáveis de ambiente
-load_dotenv()
-
-# ---------- Logging ----------
-logging.basicConfig(
-    level=os.getenv("LOG_LEVEL", "INFO"),
-    format="%(asctime)s %(levelname)s %(name)s - %(message)s"
-)
-logger = logging.getLogger("air-api")
-
-# Inicializar FastAPI
 app = FastAPI(
     title="Weather & Air Quality API - NASA Space Apps 2025",
     description="API para dados meteorológicos e qualidade do ar usando Meteomatics",
     version="1.0.0"
 )
 
-# Configurar CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -670,9 +647,6 @@ async def dispatch_alerts(lat: float, lon: float):
         "location": air_data.get("location")
     }
 
-# ============================================================
-# 🚀 Startup (mantive prints e agora assíncrono)
-# ============================================================
 @app.on_event("startup")
 async def startup_event():
     logger.info("\n" + "=" * 60)
@@ -686,9 +660,6 @@ async def startup_event():
     logger.info("📖 Docs: http://localhost:8000/docs")
     logger.info("=" * 60 + "\n")
 
-# ============================================================
-# 🏁 Execução local
-# ============================================================
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000, log_level="info")

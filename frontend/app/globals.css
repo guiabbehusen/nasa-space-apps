@@ -4,99 +4,126 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  /* BREATHSAFE Theme - Clean air quality monitoring palette */
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
+  /* NASA Space Apps Challenge Design System - Light Mode */
+
+  /* NASA Official Color Palette */
+  --nasa-electric-blue: #2e96f5;
+  --nasa-bright-blue: #0960e1;
+  --nasa-deep-blue: #0042a6;
+  --nasa-midnight-blue: #07173f;
+  --nasa-rocket-red: #e43700;
+  --nasa-deep-red: #8e1100;
+  --nasa-neon-yellow: #eafe07;
+  --nasa-white: #ffffff;
+  --nasa-deep-space: #0a1128;
+
+  /* Semantic Design Tokens - Light Mode */
+  --background: oklch(1 0 0); /* White */
+  --foreground: oklch(0.145 0.02 264); /* Midnight Blue */
+  --card: oklch(0.98 0.01 240);
+  --card-foreground: oklch(0.145 0.02 264);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
+  --popover-foreground: oklch(0.145 0.02 264);
 
-  /* Primary: Calm blue for trust and clarity */
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
+  /* Primary: Electric Blue */
+  --primary: oklch(0.62 0.15 240);
+  --primary-foreground: oklch(1 0 0);
 
-  /* Secondary: Soft teal for health/nature */
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
+  /* Secondary: Bright Blue */
+  --secondary: oklch(0.52 0.18 250);
+  --secondary-foreground: oklch(1 0 0);
 
-  /* Accent: Fresh green for good air quality */
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
+  /* Accent: Neon Yellow (use sparingly) */
+  --accent: oklch(0.95 0.18 105);
+  --accent-foreground: oklch(0.145 0.02 264);
 
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
+  --muted: oklch(0.95 0.01 240);
+  --muted-foreground: oklch(0.5 0.02 264);
 
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.577 0.245 27.325);
+  /* Destructive: Rocket Red */
+  --destructive: oklch(0.55 0.22 25);
+  --destructive-foreground: oklch(1 0 0);
 
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  --border: oklch(0.88 0.02 240);
+  --input: oklch(0.88 0.02 240);
+  --ring: oklch(0.62 0.15 240);
 
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
+  /* Chart colors using NASA palette */
+  --chart-1: oklch(0.62 0.15 240); /* Electric Blue */
+  --chart-2: oklch(0.52 0.18 250); /* Bright Blue */
+  --chart-3: oklch(0.35 0.15 260); /* Deep Blue */
+  --chart-4: oklch(0.95 0.18 105); /* Neon Yellow */
+  --chart-5: oklch(0.55 0.22 25); /* Rocket Red */
 
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --radius: 0.5rem;
+  --sidebar: oklch(0.98 0.01 240);
+  --sidebar-foreground: oklch(0.145 0.02 264);
+  --sidebar-primary: oklch(0.62 0.15 240);
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-accent: oklch(0.95 0.01 240);
+  --sidebar-accent-foreground: oklch(0.145 0.02 264);
+  --sidebar-border: oklch(0.88 0.02 240);
+  --sidebar-ring: oklch(0.62 0.15 240);
 }
 
 .dark {
-  /* Dark mode: Deep space with vibrant accents */
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.145 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.145 0 0);
-  --popover-foreground: oklch(0.985 0 0);
+  /* NASA Space Apps Challenge Design System - Dark Mode */
 
-  --primary: oklch(0.985 0 0);
-  --primary-foreground: oklch(0.205 0 0);
+  /* Semantic Design Tokens - Dark Mode */
+  --background: oklch(0.145 0.02 264); /* Midnight Blue */
+  --foreground: oklch(1 0 0); /* White */
+  --card: oklch(0.2 0.03 260);
+  --card-foreground: oklch(1 0 0);
+  --popover: oklch(0.18 0.03 264);
+  --popover-foreground: oklch(1 0 0);
 
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
+  /* Primary: Electric Blue */
+  --primary: oklch(0.62 0.15 240);
+  --primary-foreground: oklch(1 0 0);
 
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
+  /* Secondary: Deep Blue */
+  --secondary: oklch(0.35 0.15 260);
+  --secondary-foreground: oklch(1 0 0);
 
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
+  /* Accent: Neon Yellow */
+  --accent: oklch(0.95 0.18 105);
+  --accent-foreground: oklch(0.145 0.02 264);
 
-  --destructive: oklch(0.396 0.141 25.723);
-  --destructive-foreground: oklch(0.637 0.237 25.331);
+  --muted: oklch(0.25 0.03 260);
+  --muted-foreground: oklch(0.7 0.02 240);
 
-  --border: oklch(0.269 0 0);
-  --input: oklch(0.269 0 0);
-  --ring: oklch(0.439 0 0);
+  /* Destructive: Rocket Red */
+  --destructive: oklch(0.55 0.22 25);
+  --destructive-foreground: oklch(1 0 0);
 
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
+  --border: oklch(0.3 0.03 260);
+  --input: oklch(0.3 0.03 260);
+  --ring: oklch(0.62 0.15 240);
 
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(0.269 0 0);
-  --sidebar-ring: oklch(0.439 0 0);
+  /* Chart colors for dark mode */
+  --chart-1: oklch(0.62 0.15 240); /* Electric Blue */
+  --chart-2: oklch(0.52 0.18 250); /* Bright Blue */
+  --chart-3: oklch(0.95 0.18 105); /* Neon Yellow */
+  --chart-4: oklch(0.55 0.22 25); /* Rocket Red */
+  --chart-5: oklch(0.45 0.12 270); /* Deep Blue variant */
+
+  --sidebar: oklch(0.18 0.03 264);
+  --sidebar-foreground: oklch(1 0 0);
+  --sidebar-primary: oklch(0.62 0.15 240);
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-accent: oklch(0.25 0.03 260);
+  --sidebar-accent-foreground: oklch(1 0 0);
+  --sidebar-border: oklch(0.3 0.03 260);
+  --sidebar-ring: oklch(0.62 0.15 240);
 }
 
 @theme inline {
-  /* optional: --font-sans, --font-serif, --font-mono if they are applied in the layout.tsx */
+  /* NASA Fonts - Fira Sans and Overpass */
+  --font-sans: "Overpass", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+  --font-mono: ui-monospace, "Cascadia Code", "Source Code Pro", Menlo, Consolas, "DejaVu Sans Mono", monospace;
+  --font-heading: "Fira Sans", ui-sans-serif, system-ui, sans-serif;
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -141,5 +168,310 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+
+  /* NASA Typography Styles */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-heading);
+    font-weight: 700;
+  }
+
+  h1 {
+    @apply text-4xl md:text-5xl lg:text-6xl font-black tracking-tight;
+  }
+
+  h2 {
+    @apply text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight;
+  }
+
+  h3 {
+    @apply text-2xl md:text-3xl font-bold;
+  }
+}
+
+/* NASA Space Apps Utility Classes */
+@layer utilities {
+  /* NASA Gradient Backgrounds - Official 45° angle */
+  .nasa-gradient {
+    background: linear-gradient(45deg, #2e96f5 0%, #0042a6 100%);
+  }
+
+  .nasa-gradient-blue {
+    background: linear-gradient(45deg, #0960e1 0%, #07173f 100%);
+  }
+
+  .nasa-gradient-subtle {
+    background: linear-gradient(45deg, rgba(46, 150, 245, 0.1) 0%, rgba(0, 66, 166, 0.1) 100%);
+  }
+
+  .nasa-gradient-red {
+    background: linear-gradient(45deg, #e43700 0%, #8e1100 100%);
+  }
+
+  .nasa-gradient-yellow {
+    background: linear-gradient(45deg, #eafe07 0%, #2e96f5 100%);
+  }
+
+  /* NASA Pattern Overlays - Following official guidelines with colored backgrounds and 25% opacity */
+
+  /* Code Pattern - Over Deep Blue background */
+  .nasa-pattern-code {
+    position: relative;
+    background-color: #0042a6; /* Deep Blue base */
+  }
+
+  .nasa-pattern-code::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: url("/patterns/code.png");
+    background-size: 1400px 1400px; /* Increased from 1000px to 1400px for much larger, more visible pattern following NASA's larger scale aesthetic */
+    background-repeat: repeat;
+    background-position: center;
+    opacity: 0.25;
+    mix-blend-mode: overlay;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Orbits Pattern - Over Electric Blue background */
+  .nasa-pattern-orbits {
+    position: relative;
+    background-color: #2e96f5; /* Electric Blue base */
+  }
+
+  .nasa-pattern-orbits::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: url("/patterns/orbits.png");
+    background-size: 800px 800px;
+    background-repeat: repeat;
+    background-position: center;
+    opacity: 0.25;
+    mix-blend-mode: soft-light;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Rosette Pattern - Over Midnight Blue background */
+  .nasa-pattern-rosette {
+    position: relative;
+    background-color: #07173f; /* Midnight Blue base */
+  }
+
+  .nasa-pattern-rosette::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: url("/patterns/rosette.png");
+    background-size: 700px 700px;
+    background-repeat: repeat;
+    background-position: center;
+    opacity: 0.25;
+    mix-blend-mode: overlay;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Waves Pattern - Over Bright Blue background */
+  .nasa-pattern-waves {
+    position: relative;
+    background-color: #0960e1; /* Bright Blue base */
+  }
+
+  .nasa-pattern-waves::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: url("/patterns/waves.png");
+    background-size: 600px 600px;
+    background-repeat: repeat;
+    background-position: center;
+    opacity: 0.25;
+    mix-blend-mode: soft-light;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Voronoi Pattern - Over Electric Blue background (lighter for map page) */
+  .nasa-pattern-voronoi {
+    position: relative;
+    background-color: #2e96f5; /* Electric Blue base - lighter */
+  }
+
+  .nasa-pattern-voronoi::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: url("/patterns/voronoi.png");
+    background-size: 650px 650px;
+    background-repeat: repeat;
+    background-position: center;
+    opacity: 0.25;
+    mix-blend-mode: overlay;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Fiduciaries Pattern - Over Deep Blue background */
+  .nasa-pattern-fiduciaries {
+    position: relative;
+    background-color: #0042a6; /* Deep Blue base */
+  }
+
+  .nasa-pattern-fiduciaries::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: url("/patterns/fiduciaries.png");
+    background-size: 500px 500px;
+    background-repeat: repeat;
+    background-position: center;
+    opacity: 0.25;
+    mix-blend-mode: overlay;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Rosette Pattern Light - Over White background with Electric Blue pattern */
+  .nasa-pattern-rosette-light {
+    position: relative;
+    background-color: #ffffff; /* Pure white base */
+  }
+
+  .nasa-pattern-rosette-light::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: url("/patterns/rosette-light.png");
+    background-size: 700px 700px;
+    background-repeat: repeat;
+    background-position: center;
+    opacity: 0.8; /* Increased opacity from 0.15 to 0.8 for maximum visibility */
+    mix-blend-mode: multiply;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Waves Pattern Light - Over White background with Deep Blue pattern */
+  .nasa-pattern-waves-light {
+    position: relative;
+    background-color: #ffffff; /* Pure white base */
+  }
+
+  .nasa-pattern-waves-light::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: url("/patterns/waves-light.png");
+    background-size: 600px 600px;
+    background-repeat: repeat;
+    background-position: center;
+    opacity: 0.8; /* Increased opacity from 0.15 to 0.8 for maximum visibility */
+    mix-blend-mode: multiply;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Voronoi Pattern Light - Over White background with Bright Blue pattern */
+  .nasa-pattern-voronoi-light {
+    position: relative;
+    background-color: #ffffff; /* Pure white base */
+  }
+
+  .nasa-pattern-voronoi-light::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: url("/patterns/voronoi-light.png");
+    background-size: 650px 650px;
+    background-repeat: repeat;
+    background-position: center;
+    opacity: 0.8; /* Increased opacity from 0.2 to 0.8 for maximum visibility */
+    mix-blend-mode: multiply;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Fiduciaries Pattern Light - Over White background with Deep Blue pattern */
+  .nasa-pattern-fiduciaries-light {
+    position: relative;
+    background-color: #ffffff; /* Pure white base */
+  }
+
+  .nasa-pattern-fiduciaries-light::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: url("/patterns/fiduciaries-light.png");
+    background-size: 500px 500px;
+    background-repeat: repeat;
+    background-position: center;
+    opacity: 0.8; /* Increased opacity from 0.18 to 0.8 for maximum visibility */
+    mix-blend-mode: multiply;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Ensure content stays above patterns */
+  .nasa-pattern-code > *,
+  .nasa-pattern-orbits > *,
+  .nasa-pattern-rosette > *,
+  .nasa-pattern-waves > *,
+  .nasa-pattern-voronoi > *,
+  .nasa-pattern-fiduciaries > *,
+  .nasa-pattern-rosette-light > *,
+  .nasa-pattern-waves-light > *,
+  .nasa-pattern-voronoi-light > *,
+  .nasa-pattern-fiduciaries-light > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  /* NASA Color Utilities */
+  .bg-nasa-electric-blue {
+    background-color: #2e96f5;
+  }
+
+  .bg-nasa-bright-blue {
+    background-color: #0960e1;
+  }
+
+  .bg-nasa-deep-blue {
+    background-color: #0042a6;
+  }
+
+  .bg-nasa-midnight-blue {
+    background-color: #07173f;
+  }
+
+  .bg-nasa-rocket-red {
+    background-color: #e43700;
+  }
+
+  .bg-nasa-neon-yellow {
+    background-color: #eafe07;
+  }
+
+  .bg-nasa-deep-space {
+    background-color: #0a1128;
+  }
+
+  .text-nasa-electric-blue {
+    color: #2e96f5;
+  }
+
+  .text-nasa-rocket-red {
+    color: #e43700;
+  }
+
+  .text-nasa-neon-yellow {
+    color: #eafe07;
   }
 }

@@ -25,6 +25,9 @@ jobs:
         run: |
           docker save myapp:latest -o myapp.tar
 
+      - name: Fix permissions for scp
+        run: chmod 644 myapp.tar
+
       - name: Copy Docker image to VPS
         uses: appleboy/scp-action@v0.1.7
         with:

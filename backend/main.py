@@ -213,7 +213,6 @@ def subscribe_email(subscription: EmailSubscription):
     try:
         data = {
             "email": subscription.email,
-            "name": subscription.name,
             "location": subscription.location,
             "profile": subscription.profile,
             "thresholds": subscription.thresholds,

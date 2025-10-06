@@ -4,7 +4,7 @@ from models.schemas import EmailSubscription
 from core.database import db
 import logging
 
-router = APIRouter(prefix="/subscriptions", tags=["Subscriptions"])
+router = APIRouter(prefix="/subscribe", tags=["Subscriptions"])
 logger = logging.getLogger("air-api")
 
 @router.post("/subscribe")
@@ -23,7 +23,8 @@ async def subscribe_email(subscription: EmailSubscription):
 
         data = {
             "email": subscription.email,
-            "location": subscription.location,
+            "lat": subscription.lat,
+            "lon": subscription.lon,
             "profile": subscription.profile,
             "thresholds": thresholds,
             "subscribed_at": datetime.utcnow(),

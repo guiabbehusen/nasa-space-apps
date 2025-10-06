@@ -1,6 +1,7 @@
 import asyncio
 import logging
 from core.database import db
+from core.email_utils import send_email
 from services.air_quality import get_air_quality_data
 
 logger = logging.getLogger("air-api")
@@ -19,11 +20,14 @@ async def dispatch_alerts(lat: float, lon: float):
     category = latest.get("category")
     timestamp = latest.get("timestamp")
 
-    dispatched = 0
+    sent = []
     failed = []
 
     cursor = db["subscriptions"].find({"active": True})
-    async for sub in cursor:
+    tasks = []
+
+    for sub in cursor:
+        email = sub.get("email")
         thresholds = sub.get("thresholds", {}) or {}
         should_alert = False
 
@@ -40,27 +44,20 @@ async def dispatch_alerts(lat: float, lon: float):
         if not should_alert:
             continue
 
-        # Aqui você poderia salvar o alerta em outra coleção, se quiser registrar
-        try:
-            await db["alerts_log"].insert_one({
-                "subscription_id": sub["_id"],
-                "lat": lat,
-                "lon": lon,
-                "aqi": aqi_value,
-                "category": category,
-                "timestamp": timestamp,
-            })
-            dispatched += 1
-        except Exception as e:
-            logger.error("Erro ao registrar alerta: %s", e)
-            failed.append({"subscription": str(sub.get("_id")), "error": str(e)})
+        subject = f"Alerta de Qualidade do Ar: {category} (AQI {aqi_value})"
+
+    results = await asyncio.gather(*tasks)
+    for r in results:
+        if r["ok"]:
+            sent.append(r["email"])
+        else:
+            failed.append(r)
 
     return {
-        "dispatched": dispatched,
+        "dispatched": len(sent),
         "failed": failed,
         "aqi": aqi_value,
         "category": category,
         "timestamp": timestamp,
-        "lat": lat,
-        "lon": lon,
+        "location": air_data.get("location"),
     }

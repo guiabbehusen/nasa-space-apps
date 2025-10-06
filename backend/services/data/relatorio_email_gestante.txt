@@ -1,0 +1,38 @@
+### Dados de Qualidade do Ar (AQI) na Localização:
+
+1. **Coordenada**: (-23.5505, -46.6333)
+2. **Resumo Geral**: O local está localizado em (-23.5505, -46.6333), classificado como perigoso por compósitos como PM2.5 e CO.
+3. **Avaliações**:
+   - PM2.5: Moderado
+   - CO: Moderado
+
+### Compostos e Níveis do AQI:
+
+- **PM2.5 (24h)**: 35.5-55.4 μg/m³, nível "Moderate" (Amarelo)
+- **CO**: Moderado
+
+### Efeitos Químicos da Qualidade do Ar em Gestantes:
+
+**Nota**: A qualidade do ar pode variar dependendo das condições locais e do tempo.
+
+1. **PM2.5 (24h)**: 35.5-55.4 μg/m³
+   - **Exposição Pode**: "Poucos sintomas de desconforto, mas pode causar sensibilidade respiratória."
+   - **Risco para Gestantes**: "Gestantes podem sentir incómodo e cansaço na respiração."
+
+2. **CO (1h)**: 93-589 μg/m³
+   - **Exposição Pode**: "Poucos sintomas de desconforto, mas pode causar sensibilidade respiratória."
+   - **Risco para Gestantes**: "Gestantes podem sentir incómodo e cansaço na respiração."
+
+### Conclusão:
+
+**Sintomas Possíveis em uma Gestante:**  
+- Pode sentir incómodo e cansaço na respiro.
+- Sensibilidade respiratória, especialmente durante atividades prolongadas ao ar livre.
+
+**Recomendações**:  
+- Evite atividades que exigem grande esforço físico, como caminhada ou exercícios aeróbicos.
+- Opte por atividades indoor (esportes ao ar livre) se possível.
+- Evite aglomerações e evita sair em dias de forte exposição ao solo.
+
+**Atenção**:  
+A qualidade do ar pode variar dependendo dos fatores locais, como tempo, condições climáticas e outras variáveis ambientais. Portanto, é sempre importante manter uma atenção continua para a saúde da respiração durante suas atividades diárias.

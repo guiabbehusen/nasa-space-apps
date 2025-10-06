@@ -1,0 +1,17 @@
+ir pollution is recognized by the World Health Organization (WHO) as the single largest environmental risk to health, contributing to millions of premature deaths annually. The core challenge in mitigation lies in how complex monitoring data is interpreted and effectively communicated to the public.
+
+The Environmental Data Challenge
+Air Quality (AQ) monitoring requires analyzing multiple pollutants—such as PM2.5, NO2, O3 and SO2
+
+ —each with different time-averaging windows (24-hour average, 1-hour peaks) and distinct toxicity thresholds.
+
+The difficulty arises when trying to convert these technical concentrations (in μg/m3) into a single, understandable message. Many platforms fail to translate the numerical Air Quality Index (AQI) value into a specific, actionable health risk for the public (e.g., the risk of an asthma attack or the need to seek shelter).
+
+The Solution: Evidence-Based Classification
+The approach to overcome this gap is to implement a classification system that functions as a rigorous bridge between environmental data and public health action.
+
+Standardized Calculation: We use the standardized methodology of the US EPA AQI to normalize the concentrations of all pollutants into a single index ranging from 0 to 500, identifying the Dominant Pollutant (the one with the highest index value).
+
+Risk Transparency: Every transition between categories (from green to yellow, red to purple) is directly linked to a high-impact scientific justification (based on studies from the WHO, NEJM, and JAMA). For instance, the shift to the Orange (101-150) band is validated by the proven risk of increased emergency room visits.
+
+This methodology ensures that when the public and health authorities receive an alert, they can make proactive decisions (like closing schools or halting outdoor activities) based on robust data and solid clinical evidence.

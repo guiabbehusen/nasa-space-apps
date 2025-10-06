@@ -1,0 +1,7 @@
+Categoria AQI (Cor),Faixa AQI,PM2.5​ (24h) (μg/m3),O3​ (8h) (μg/m3),NO2​ (1h) (μg/m3),SO2​ (1h) (μg/m3),Justificativa de Risco e Evidência Científica
+Boa (Verde),0-50,0.0-12.0,0.0-120,0.0-100,0.0-92,Risco Mínimo: A qualidade do ar é considerada satisfatória.
+Moderada (Amarela),51-100,12.1-35.4,121-150,101-188,93-377,Risco para Sensíveis: Concentrações de PM2.5​ nesta faixa já são associadas a aumento de risco crônico e leve impacto em indivíduos vulneráveis. [OMS AQG 2021]
+Não Saudável para Sensíveis (Laranja),101-150,35.5-55.4,151-188,189-679,378-588,"Alerta de Hospitalização: Limiar onde ocorre aumento de visitas de emergência por doenças cardiovasculares e respiratórias, especialmente em grupos de risco. [Di et al., NEJM 2017]"
+Não Saudável (Vermelha),151-200,55.5-150.4,189-226,680-1205,589-798,"Risco Generalizado: Toda a população pode começar a sentir efeitos. PM2.5​>55.5 tem um link direto com o aumento da mortalidade prematura. [Dominici et al., JAMA 2006]"
+Muito Não Saudável (Roxa),201-300,150.5-250.4,227-753 (O3​ 1h),1206-2348,799-1583,Alerta de Emergência: Risco grave de danos pulmonares permanentes e efeitos sérios. Exige a restrição total de atividades externas. [US EPA AQI Technical Assistance Document]
+Perigosa (Bordô),301-500,250.5-500.4,754-1200 (O3​ 1h),2349-3848,1584-2620,Risco de Morte Imediata: Nível de Emergência de Saúde Pública. Risco de morte para toda a população. Necessidade de planos de evacuação e abrigos com filtração de ar. [US EPA AQI Technical Assistance Document]

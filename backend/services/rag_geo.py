@@ -10,11 +10,11 @@ from ollama import Client
 # ----------------------------------------
 client = Client()
 
-DATA_PATH = "./data/tempo.csv"  # seu CSV atual
-INDEX_PATH = "./storage_faiss/faiss_geo_index.bin"
+DATA_PATH = "./services/data/tempo.csv"  # seu CSV atual
+INDEX_PATH = "./services/storage_faiss/faiss_geo_index.bin"
 LAT_COL = "latitude"
 LON_COL = "longitude"
-JSON_MODEL = "qwen2.5:0.5b"
+JSON_MODEL = "qwen2.5:1.5b"
 
 # ----------------------------------------
 # CSV & FAISS
@@ -76,32 +76,31 @@ def _parse_json_or_raise(s: str) -> dict:
 # ----------------------------------------
 def gerar_json_via_slm(lat, lon, df_resultado):
     """
-    Força a SLM a retornar JSON válido:
+    Forces the SLM to return valid JSON:
       - format="json"
-      - system: responder apenas JSON
+      - system: respond only with JSON
       - temperature=0
-      - valida/retenta 1x se necessário
+      - validates/retries once if necessary
     """
     dados_pontos = df_resultado.to_dict(orient="records")
 
     system_msg = (
-        "Você é um gerador de JSON. Responda SOMENTE com um JSON válido, "
-        "sem texto adicional, sem explicações, sem markdown."
+        "You are a JSON generator. Respond ONLY with valid JSON — "
+        "no extra text, no explanations, no markdown."
     )
 
-    # Especificação de estrutura esperada (instrução textual; Ollama não valida schema)
     schema_hint = {
-        "coordenada_consulta": {"latitude": "float", "longitude": "float"},
-        "resumo_geral": "string",
-        "avaliacoes": [
+        "query_coordinates": {"latitude": "float", "longitude": "float"},
+        "summary": "string",
+        "evaluations": [
             {
                 "lat": "float",
                 "lon": "float",
-                "distancia": "float",
-                "compostos": {
-                    "<nome_composto>": {"valor": "float", "nivel": "Good|Moderate|USG|Unhealthy|Very Unhealthy|Hazardous"}
+                "distance": "float",
+                "compounds": {
+                    "<compound_name>": {"value": "float", "level": "Good|Moderate|USG|Unhealthy|Very Unhealthy|Hazardous"}
                 },
-                "indice_geral": "string"
+                "overall_index": "string"
             }
         ]
     }
@@ -118,21 +117,20 @@ traps = {
 """
 
     user_prompt = (
-        "Gere um JSON estruturado a partir dos dados abaixo.\n\n"
-        f"Coordenada consultada: lat={lat}, lon={lon}\n\n"
-        "Pontos próximos (lista de registros):\n"
+        "Generate a structured JSON from the data below.\n\n"
+        f"Queried coordinates: lat={lat}, lon={lon}\n\n"
+        "Nearby points (list of records):\n"
         f"{json.dumps(dados_pontos, ensure_ascii=False)}\n\n"
-        "Considere que cada registro pode conter compostos químicos (ex.: PM2.5, NO2, SO2, O3, CO...). "
-        "Classifique cada composto segundo o sistema TRAPS (categorias Good, Moderate, USG, Unhealthy, Very Unhealthy, Hazardous):\n"
+        "Each record may contain chemical compounds (e.g., PM2.5, NO2, SO2, O3, CO...). "
+        "Classify each compound according to the TRAPS system (categories: Good, Moderate, USG, Unhealthy, Very Unhealthy, Hazardous):\n"
         f"{traps_text}\n"
-        "Se não houver um composto em um registro, ignore-o nesse registro.\n\n"
-        "Estrutura esperada do JSON (apenas referência, não inclua comentários):\n"
+        "If a compound is missing in a record, ignore it for that record.\n\n"
+        "Expected JSON structure (for reference only, do not include comments):\n"
         f"{json.dumps(schema_hint, ensure_ascii=False)}\n\n"
-        "IMPORTANTE: Responda SOMENTE com JSON válido, sem texto extra, sem markdown."
+        "IMPORTANT: Return ONLY valid JSON. No extra text. No markdown."
     )
 
-    # 1ª tentativa
-    print("[gerar_json_via_slm] Tentativa 1 com format=json...")
+    print("[gerar_json_via_slm] Attempt 1 with format=json...")
     resp = client.chat(
         model=JSON_MODEL,
         messages=[
@@ -140,7 +138,7 @@ traps = {
             {"role": "user", "content": user_prompt},
         ],
         options={"temperature": 0},
-        format="json",  # força o modelo a responder JSON
+        format="json",
     )
     raw = resp["message"]["content"]
 
@@ -148,9 +146,8 @@ traps = {
         parsed = _parse_json_or_raise(raw)
         return json.dumps(parsed, ensure_ascii=False, indent=2)
     except Exception:
-        # 2ª tentativa, instrução ainda mais rígida
-        print("[gerar_json_via_slm] Tentativa 1 falhou em JSON. Reforçando instruções (Tentativa 2).")
-        harder_user_prompt = user_prompt + "\n\nRETORNE APENAS JSON VÁLIDO. NADA MAIS."
+        print("[gerar_json_via_slm] Attempt 1 failed. Retrying with stricter instructions (Attempt 2).")
+        harder_user_prompt = user_prompt + "\n\nRETURN ONLY VALID JSON. NOTHING ELSE."
         resp2 = client.chat(
             model=JSON_MODEL,
             messages=[
@@ -163,6 +160,7 @@ traps = {
         raw2 = resp2["message"]["content"]
         parsed2 = _parse_json_or_raise(raw2)
         return json.dumps(parsed2, ensure_ascii=False, indent=2)
+
 
 # ----------------------------------------
 # MAIN

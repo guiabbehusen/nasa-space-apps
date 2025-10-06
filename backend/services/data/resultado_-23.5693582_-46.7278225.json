@@ -1,0 +1,37 @@
+{
+  "coordenada_consulta": {
+    "latitude": -23.5693582,
+    "longitude": -46.7278225
+  },
+  "resumo_geral": "Não há registros disponíveis para análise.",
+  "avaliacoes": [
+    {
+      "lat": -23.5693582,
+      "lon": -46.7278225,
+      "distancia": 0.2595330476760864,
+      "compostos": {
+        "NMVOC_label": {
+          "valor": "Hazardous",
+          "nivel": "Hazardous"
+        },
+        "CO_label": {
+          "valor": "Hazardous",
+          "nivel": "Hazardous"
+        },
+        "NOx_label": {
+          "valor": "Hazardous",
+          "nivel": "Hazardous"
+        },
+        "CH4_label": {
+          "valor": "Hazardous",
+          "nivel": "Hazardous"
+        },
+        "final_label": {
+          "valor": "Hazardous",
+          "nivel": "Hazardous"
+        }
+      },
+      "indice_geral": "Não há registros para este ponto de referência."
+    }
+  ]
+}

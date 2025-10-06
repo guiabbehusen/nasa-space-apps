@@ -7,9 +7,9 @@ from ollama import Client
 # ----------------------------------------
 client = Client()
 
-TEMPO_API_JSON = "./data/resultado_-23.5505_-46.6333.json"  # JSON completo do AQI
-CHEM_EFFECTS_CSV = "./data/chemical_effects.csv"            # CSV com compostos e efeitos
-AQI_ABOUT = "./data/about_aqi.txt"                          # Texto explicativo sobre AQI
+TEMPO_API_JSON = "./services/data/resultado_-23.5505_-46.6333.json"  # JSON completo do AQI
+CHEM_EFFECTS_CSV = "./services/data/chemical_effects.csv"            # CSV com compostos e efeitos
+AQI_ABOUT = "./services/data/about_aqi.txt"                          # Texto explicativo sobre AQI
 PROFILE = "gestante"                                        # pode ser "idoso", "criança", etc.
 SLM_MODEL = "qwen2.5:1.5b"
 
@@ -30,8 +30,8 @@ def carregar_txt(path):
 
 def gerar_relatorio_amigavel(aqi_index, aqi_json, chem_effects, about_aqi_text, perfil):
     """
-    Usa a SLM para gerar um texto em português, amigável,
-    descrevendo os riscos à saúde com base no AQI, nos compostos e no perfil humano.
+    Uses the SLM to generate a friendly English report text
+    describing the health risks based on AQI, compounds, and human profile.
     """
     traps_text = """
 traps = {
@@ -45,48 +45,48 @@ traps = {
 """
 
     prompt = f"""
-Você é um especialista em saúde ambiental.
+You are an environmental health specialist.
 
-Com base nas informações fornecidas, escreva um **relatório textual em português**,
-em tom **amigável e compreensível**, que possa ser enviado por **email** para o usuário.
+Based on the information provided, write a **friendly and easy-to-read report in English**
+that can be **sent by email** to the user.
 
-NUMERO DA AQI ( AIR QUALITY INDEX ) NO LOCAL EXATO: {aqi_index}
-### Dados de qualidade do ar (AQI - JSON completo):
+AIR QUALITY INDEX (AQI) VALUE FOR THE EXACT LOCATION: {aqi_index}
+### Air quality data (AQI - full JSON):
 {json.dumps(aqi_json, ensure_ascii=False, indent=2)}
 
-### Dados de efeitos químicos (CSV):
+### Chemical effects data (CSV):
 {json.dumps(chem_effects, ensure_ascii=False, indent=2)}
 
-### Texto explicativo sobre o AQI:
+### About AQI:
 {about_aqi_text}
 
-### Perfil da pessoa:
+### User profile:
 {perfil}
 
-Use o sistema TRAPS para interpretar o nível de cada composto químico:
+Use the TRAPS system to interpret each chemical compound level:
 {traps_text}
 
-Sua tarefa:
-1. Analise os compostos e níveis do AQI.
-2. Relacione os compostos e concentrações aos efeitos listados no CSV.
-3. Use também o texto explicativo sobre AQI para embasar sua análise.
-4. Descreva de forma clara o que essa qualidade do ar pode causar ao corpo de uma pessoa com esse perfil.
-5. Evite linguagem técnica — o texto deve soar natural, empático e claro.
-6. A saída deve ser **somente texto corrido**, pronto para ser enviado por email.
+Your task:
+1. Analyze the AQI compounds and levels.
+2. Relate the compounds and concentrations to the effects listed in the CSV.
+3. Use the explanatory text about AQI to support your reasoning.
+4. Clearly describe what this air quality could cause to a person with this profile.
+5. Avoid technical jargon — the text should sound natural, empathetic, and clear.
+6. The output must be **plain text only**, ready to send via email.
 
-Exemplo de tom:
-"Olá! A qualidade do ar na sua região hoje está moderada, com presença elevada de PM2.5 e CO. Para gestantes, isso pode causar leve desconforto respiratório e cansaço, sendo importante evitar atividades ao ar livre prolongadas."
+Example tone:
+"Hello! The air quality in your area today is moderate, with elevated PM2.5 and CO levels. For pregnant individuals, this may cause mild respiratory discomfort and fatigue, so it’s best to avoid prolonged outdoor activities."
 """
 
-    print("[gerar_relatorio_amigavel] Gerando texto via SLM...")
+    print("[gerar_relatorio_amigavel] Generating text via SLM...")
     response = client.chat(
         model=SLM_MODEL,
         messages=[
             {
                 "role": "system",
                 "content": (
-                    "Você é um assistente especializado em saúde ambiental. "
-                    "Responda apenas com texto corrido em português, sem JSON ou código."
+                    "You are an assistant specialized in environmental health. "
+                    "Respond only with plain text in English, no JSON or code."
                 )
             },
             {"role": "user", "content": prompt}

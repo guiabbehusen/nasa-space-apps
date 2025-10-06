@@ -22,7 +22,8 @@ jobs:
           docker build -t myapp:latest ./backend
 
       - name: Save Docker image as tar
-        run: docker save myapp:latest -o myapp.tar
+        run: |
+          docker save myapp:latest -o myapp.tar
 
       - name: Fix permissions for scp
         run: chmod 644 myapp.tar
@@ -31,7 +32,7 @@ jobs:
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.VPS_HOST }}
-          username: deploy
+          username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           source: "myapp.tar"
           target: "~/deploy/"
@@ -40,22 +41,17 @@ jobs:
         uses: appleboy/ssh-action@v1.1.0
         with:
           host: ${{ secrets.VPS_HOST }}
-          username: deploy
+          username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
-            set -e
-            mkdir -p ~/deploy
             cd ~/deploy
-
-            # Carrega a imagem e reinicia o container
             docker load -i myapp.tar
             docker stop myapp || true
             docker rm myapp || true
-
             if [ -f ".env" ]; then
-              echo "✅ Usando variáveis de ambiente do .env"
               docker run -d --name myapp --env-file .env -p 8000:8000 myapp:latest
             else
-              echo "⚠️  .env não encontrado, rodando sem variáveis"
+              echo "⚠️  .env não encontrado, rodando sem variáveis de ambiente"
               docker run -d --name myapp -p 8000:8000 myapp:latest
             fi
+

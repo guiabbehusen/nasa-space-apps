@@ -3,7 +3,6 @@ import logging
 from core.database import db
 from core.email_utils import send_email
 from services.air_quality import get_air_quality_data
-from services.slm import generate_air_quality_email
 
 logger = logging.getLogger("air-api")
 
@@ -46,24 +45,6 @@ async def dispatch_alerts(lat: float, lon: float):
             continue
 
         subject = f"Alerta de Qualidade do Ar: {category} (AQI {aqi_value})"
-        body = await generate_air_quality_email(
-            name=sub.get("profile"),
-            location_name=air_data["location"]["name"],
-            aqi=aqi_value,
-            category=category,
-            timestamp=timestamp,
-        )
-
-        async def send_and_collect(email_addr, subj, msg):
-            try:
-                await asyncio.to_thread(send_email, subj, msg, email_addr)
-                logger.info("✅ Email enviado para %s", email_addr)
-                return {"ok": True, "email": email_addr}
-            except Exception as e:
-                logger.exception("Erro ao enviar email: %s", e)
-                return {"ok": False, "email": email_addr, "error": str(e)}
-
-        tasks.append(send_and_collect(email, subject, body))
 
     results = await asyncio.gather(*tasks)
     for r in results:

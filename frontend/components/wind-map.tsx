@@ -373,28 +373,6 @@ export default function WindMap({ center, timelineData, locationName, onRecenter
             <div className="text-xs text-muted-foreground">Relative</div>
           </CardContent>
         </Card>
-
-        <Card className="bg-card/50 backdrop-blur border-border">
-          <CardContent className="pt-4 pb-4 space-y-1">
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <Eye className="h-4 w-4" />
-              <span className="text-xs font-medium">Visibility</span>
-            </div>
-            <div className="text-2xl font-bold">{weather.visibility}</div>
-            <div className="text-xs text-muted-foreground">km</div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-card/50 backdrop-blur border-border">
-          <CardContent className="pt-4 pb-4 space-y-1">
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <Gauge className="h-4 w-4" />
-              <span className="text-xs font-medium">Pressure</span>
-            </div>
-            <div className="text-2xl font-bold">{weather.pressure}</div>
-            <div className="text-xs text-muted-foreground">hPa</div>
-          </CardContent>
-        </Card>
       </div>
     </div>
   )

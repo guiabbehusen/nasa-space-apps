@@ -2,9 +2,8 @@ import { type NextRequest, NextResponse } from "next/server"
 
 const BACKEND_URL = "http://api.tempo11.earth:8000"
 
-// CORS headers
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*", // 👉 em prod: "https://teusite.vercel.app"
+  "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type, Authorization",
 }
@@ -16,11 +15,11 @@ export async function OPTIONS() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { email, location, profile, thresholds } = body
+    const { email, lat, lng, profile, thresholds } = body
 
-    if (!email || !location || !profile) {
+    if (!email || lat == null || lng == null || !profile) {
       return NextResponse.json(
-        { error: "Missing required fields: email, location, profile" },
+        { error: "Missing required fields: email, lat, lng, profile" },
         { status: 400, headers: corsHeaders }
       )
     }
@@ -36,10 +35,16 @@ export async function POST(request: NextRequest) {
     const response = await fetch(`${BACKEND_URL}/subscribe`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, location, profile, thresholds }),
+      body: JSON.stringify({
+        email,
+        lat,
+        lon: lng, // 👈 importante: o backend usa `lon`
+        profile,
+        thresholds,
+      }),
     })
 
-    const data = await response.json()
+    const data = await response.json().catch(() => ({}))
 
     if (!response.ok) {
       if (response.status === 503) {
@@ -49,7 +54,8 @@ export async function POST(request: NextRequest) {
             message: "Subscription recorded (Firebase not configured)",
             subscription: {
               email,
-              location,
+              lat,
+              lng,
               profile,
               thresholds,
               createdAt: new Date().toISOString(),

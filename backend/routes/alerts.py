@@ -8,7 +8,7 @@ logger = logging.getLogger("air-api")
 @router.post("/dispatch")
 async def trigger_alerts(lat: float, lon: float):
     """
-    Dispara alertas de qualidade do ar para os assinantes via e-mail.
+    Dispara alertas de qualidade do ar com base nas coordenadas (lat, lon).
     Baseia-se nos thresholds salvos no MongoDB.
     """
     try:
@@ -17,14 +17,16 @@ async def trigger_alerts(lat: float, lon: float):
             raise HTTPException(status_code=500, detail="Erro ao disparar alertas")
         return {
             "success": True,
-            "dispatched": len(result.get("sent", [])),
+            "dispatched": result.get("dispatched", 0),
             "failed": result.get("failed", []),
             "aqi": result.get("aqi"),
             "category": result.get("category"),
-            "location": result.get("location", {}),
+            "timestamp": result.get("timestamp"),
+            "lat": result.get("lat"),
+            "lon": result.get("lon"),
         }
     except HTTPException:
         raise
     except Exception as e:
-        logger.exception("Erro ao enviar alertas: %s", e)
+        logger.exception("Erro ao processar alertas: %s", e)
         raise HTTPException(status_code=500, detail=str(e))

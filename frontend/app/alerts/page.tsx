@@ -144,10 +144,12 @@ export default function AlertsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email,
-          location: selectedLocation.name,
+          lat: selectedLocation.lat,
+          lng: selectedLocation.lng,
           profile: selectedProfile,
           thresholds: { aqi: aqiThreshold[0] },
         }),
+
       })
 
       await response.json().catch(() => null)

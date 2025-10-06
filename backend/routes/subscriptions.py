@@ -7,7 +7,7 @@ import logging
 router = APIRouter(prefix="/subscribe", tags=["Subscriptions"])
 logger = logging.getLogger("air-api")
 
-@router.post("/subscribe")
+@router.post("/")
 async def subscribe_email(subscription: EmailSubscription):
     """
     Inscreve um usuário para alertas de qualidade do ar via e-mail.
@@ -37,23 +37,3 @@ async def subscribe_email(subscription: EmailSubscription):
     except Exception as e:
         logger.exception("Erro ao salvar inscrição: %s", e)
         raise HTTPException(status_code=500, detail=f"Erro ao salvar inscrição: {e}")
-
-@router.get("/")
-async def list_subscriptions(limit: int = 100):
-    """
-    Lista as inscrições ativas armazenadas no banco de dados.
-    """
-    if db is None:
-        raise HTTPException(status_code=503, detail="MongoDB não configurado")
-
-    try:
-        cursor = db["subscriptions"].find({"active": True}).limit(limit)
-        subscriptions = []
-        for sub in cursor:
-            sub["_id"] = str(sub["_id"])
-            subscriptions.append(sub)
-        return {"success": True, "total": len(subscriptions), "subscriptions": subscriptions}
-
-    except Exception as e:
-        logger.exception("Erro ao listar inscrições: %s", e)
-        raise HTTPException(status_code=500, detail=f"Erro ao listar inscrições: {e}")

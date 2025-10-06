@@ -1,0 +1,81 @@
+{
+  "coordenada_consulta": {
+    "latitude": "-23.5505",
+    "longitude": "-46.6333"
+  },
+  "resumo_geral": "O ponto de consulta está localizado em (-23.5505, -46.6333). Este ponto é considerado perigoso por compósitos como PM2.5 e CO.",
+  "avaliacoes": [
+    {
+      "lat": "-23.5505",
+      "lon": "-46.6333",
+      "distancia": 0.3365177810192108,
+      "compostos": {
+        "PM2.5": {
+          "valor": "float",
+          "nivel": "Good|Moderate|USG|Unhealthy|Very Unhealthy|Hazardous"
+        }
+      },
+      "indice_geral": "Good"
+    },
+    {
+      "lat": "-23.5505",
+      "lon": "-46.6333",
+      "distancia": 0.3365177810192108,
+      "compostos": {
+        "CO": {
+          "valor": "float",
+          "nivel": "Good|Moderate|USG|Unhealthy|Very Unhealthy|Hazardous"
+        }
+      },
+      "indice_geral": "Moderate"
+    },
+    {
+      "lat": "-23.5505",
+      "lon": "-46.6333",
+      "distancia": 0.3365177810192108,
+      "compostos": {
+        "NOx": {
+          "valor": "float",
+          "nivel": "Good|Moderate|USG|Unhealthy|Very Unhealthy|Hazardous"
+        }
+      },
+      "indice_geral": "USG"
+    },
+    {
+      "lat": "-23.5505",
+      "lon": "-46.6333",
+      "distancia": 0.3365177810192108,
+      "compostos": {
+        "CH4": {
+          "valor": "float",
+          "nivel": "Good|Moderate|USG|Unhealthy|Very Unhealthy|Hazardous"
+        }
+      },
+      "indice_geral": "Unhealthy"
+    },
+    {
+      "lat": "-23.5505",
+      "lon": "-46.6333",
+      "distancia": 0.3365177810192108,
+      "compostos": {
+        "NOx": {
+          "valor": "float",
+          "nivel": "Good|Moderate|USG|Unhealthy|Very Unhealthy|Hazardous"
+        }
+      },
+      "indice_geral": "Very Unhealthy"
+    },
+    {
+      "lat": "-23.5505",
+      "lon": "-46.6333",
+      "distancia": 0.3365177810192108,
+      "compostos": {
+        "CO": {
+          "valor": "float",
+          "nivel": "Good|Moderate|USG|Unhealthy|Very Unhealthy|Hazardous"
+        }
+      },
+      "indice_geral": "Hazardous"
+    }
+  ]
+}

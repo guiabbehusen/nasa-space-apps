@@ -179,7 +179,7 @@ def run(
     smooth: float = 0.05,  # fraction of (max-min) for trapezoid shoulders
 ):
     root = Path(root) if root else DEFAULT_DATA_ROOT
-    out = Path(out) if out else (SCRIPT_DIR / "fuzzy_labels.csv")
+    out = Path(out) if out else (SCRIPT_DIR / "tempo.csv")
     print(f"[info] Using data root: {root.resolve()}")
     print(f"[info] Output file    : {out.resolve()}")
 
@@ -258,7 +258,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--root", default=str(DEFAULT_DATA_ROOT),
                     help="Data folder (default: backend/dataset/reactive-gases-grids relative to this file).")
-    ap.add_argument("--out",  default=str(SCRIPT_DIR / "fuzzy_labels.csv"), help="Output CSV path.")
+    ap.add_argument("--out",  default=str(SCRIPT_DIR / "tempo.csv"), help="Output CSV path.")
     ap.add_argument("--min-year", type=int, default=2000)
     ap.add_argument("--max-year", type=int, default=2030)
     ap.add_argument("--year", type=int, default=None, help="If set, classify only this year.")
